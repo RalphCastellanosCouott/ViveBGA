@@ -10,16 +10,6 @@ use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Register Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles the registration of new users as well as their
-    | validation and creation. By default this controller uses a trait to
-    | provide this functionality without requiring any additional code.
-    |
-    */
 
     use RegistersUsers;
 
@@ -48,11 +38,26 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        return Validator::make($data, [
+        $rules = [
+            'role' => ['required', 'in:cliente,organizador'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+            'foto_perfil' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+        ];
+
+        // Si el rol es cliente → se pide apellido
+        if (isset($data['role']) && $data['role'] === 'cliente') {
+            $rules['apellido'] = ['required', 'string', 'max:255'];
+        }
+
+        // Si el rol es organizador → se pide descripción y foto obligatoria
+        if (isset($data['role']) && $data['role'] === 'organizador') {
+            $rules['descripcion'] = ['required', 'string', 'max:1000'];
+            $rules['foto_perfil'] = ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'];
+        }
+
+        return Validator::make($data, $rules);
     }
 
     /**
@@ -63,10 +68,24 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+
+        // Subida de imagen (opcional para clientes)
+        $fotoPath = null;
+
+        if (isset($data['foto_perfil']) && $data['foto_perfil'] instanceof \Illuminate\Http\UploadedFile) {
+            $fotoPath = $data['foto_perfil']->store('fotos_perfil', 'public');
+        }
+
+        $user = User::create([
+            'role' => $data['role'],
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'apellido' => $data['role'] === 'cliente' ? $data['apellido'] ?? null : null,
+            'descripcion' => $data['role'] === 'organizador' ? $data['descripcion'] ?? null : null,
+            'foto_perfil' => $fotoPath,
         ]);
+
+        return $user;
     }
 }
