@@ -13,7 +13,9 @@
             <!-- Left Side Of Navbar -->
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ url('/') }}">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Eventos</a></li>
+                <li class="nav-item">
+            <a class="nav-link" href="{{ route('eventos.index') }}">Eventos</a>
+        </li>
                 <li class="nav-item"><a class="nav-link" href="#">Lugares</a></li>
             </ul>
 

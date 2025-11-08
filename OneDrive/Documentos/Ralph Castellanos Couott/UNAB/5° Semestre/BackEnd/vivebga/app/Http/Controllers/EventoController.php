@@ -10,7 +10,6 @@ class EventoController extends Controller
 {
     public function store(Request $request)
     {
-        // Validar datos
         $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'required|string',
@@ -18,9 +17,18 @@ class EventoController extends Controller
             'hora' => 'required',
             'direccion' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Crear el evento
+        // Ruta por defecto si no sube imagen
+        $rutaImagen = null;
+
+        // Si se subió una imagen, guardarla en storage/app/public/eventos
+        if ($request->hasFile('imagen')) {
+            $rutaImagen = $request->file('imagen')->store('eventos', 'public');
+        }
+
+        // Crear evento con imagen incluida
         Eventos::create([
             'user_id' => Auth::id(),
             'nombre' => $request->nombre,
@@ -29,9 +37,30 @@ class EventoController extends Controller
             'hora' => $request->hora,
             'direccion' => $request->direccion,
             'precio' => $request->precio,
+            'imagen' => $rutaImagen,
         ]);
 
-        // Redirigir con mensaje
-        return redirect()->route('promotor.mis-eventos')->with('success', 'Evento creado correctamente.');
+        return redirect()
+            ->route('promotor.mis-eventos')
+            ->with('success', 'Evento creado correctamente.');
     }
+
+    public function show($id)
+{
+    $evento = Eventos::findOrFail($id);
+    return view('events.detail', compact('evento'));
 }
+    public function index()
+{
+    $hoy = now()->toDateString();
+
+    // Mostrar solo eventos que aún no han pasado
+    $eventos = \App\Models\Eventos::where('fecha', '>=', $hoy)
+                ->orderBy('fecha', 'asc')
+                ->get();
+
+    return view('events.index', compact('eventos'));
+}
+
+};
+

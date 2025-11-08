@@ -1,8 +1,9 @@
 <?php
-
+use App\Http\Controllers\EventoController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PromotorController;
+use App\Http\Controllers\MainController;
 
 Route::get('/', [HomeController::class, 'welcome'])->name('welcome');
 
@@ -29,3 +30,15 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/eventos', [App\Http\Controllers\EventoController::class, 'store'])
     ->middleware('auth')
     ->name('eventos.store');
+
+
+
+Route::get('/eventos', [EventoController::class, 'index'])->name('eventos.index');
+
+
+ 
+
+Route::get('/main', [MainController::class, 'index'])->name('main'); 
+
+Route::get('/evento/{id}', [App\Http\Controllers\EventoController::class, 'show'])->name('evento.detalle');
+
