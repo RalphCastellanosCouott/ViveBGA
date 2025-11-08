@@ -41,6 +41,38 @@
     </script>
 
     @yield('scripts')
+
+    {{-- 🔔 Modal de alerta dinámico --}}
+    @if (session('error') || session('success'))
+        <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header {{ session('error') ? 'bg-danger text-white' : 'bg-success text-white' }}">
+                        <h5 class="modal-title" id="alertModalLabel">
+                            {{ session('error') ? 'Error' : 'Éxito' }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ session('error') ?? session('success') }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const modalElement = document.getElementById('alertModal');
+                if (modalElement) {
+                    const alertModal = new bootstrap.Modal(modalElement);
+                    alertModal.show();
+                }
+            });
+        </script>
+    @endif
 </body>
 
 </html>

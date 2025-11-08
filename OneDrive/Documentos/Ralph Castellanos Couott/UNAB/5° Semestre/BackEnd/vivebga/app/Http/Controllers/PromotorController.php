@@ -15,6 +15,11 @@ class PromotorController extends Controller
 
     public function index()
     {
+        if (Auth::user()->role !== 'organizador') {
+            return redirect('/')
+                ->with('error', 'Solo los organizadores pueden acceder a esta vista.');
+        }
+
         return view('organizer.promotor');
     }
 
@@ -50,17 +55,16 @@ class PromotorController extends Controller
     }
 
 
-public function listaEventos()
-{
-    // Obtiene el usuario autenticado
-    $user = auth()->user();
+    public function listaEventos()
+    {
+        // Obtiene el usuario autenticado
+        $user = Auth::user();
 
-    // Obtiene los eventos creados por el promotor logueado
-    $eventos = \App\Models\Eventos::where('user_id', $user->id)
-                ->orderBy('fecha', 'asc')
-                ->get();
+        // Obtiene los eventos creados por el promotor logueado
+        $eventos = Eventos::where('user_id', $user->id)
+            ->orderBy('fecha', 'asc')
+            ->get();
 
-    return view('organizer.mis-eventos', compact('eventos', 'user'));
-}
-
+        return view('organizer.mis-eventos', compact('eventos', 'user'));
+    }
 }

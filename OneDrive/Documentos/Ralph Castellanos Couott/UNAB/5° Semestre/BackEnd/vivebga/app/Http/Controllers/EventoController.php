@@ -10,6 +10,12 @@ class EventoController extends Controller
 {
     public function store(Request $request)
     {
+        if (Auth::user()->role !== 'organizador') {
+            return redirect()
+                ->route('home')
+                ->with('error', 'Solo los organizadores pueden crear eventos.');
+        }
+
         $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'required|string',
@@ -41,26 +47,24 @@ class EventoController extends Controller
         ]);
 
         return redirect()
-            ->route('promotor.mis-eventos')
+            ->route('mis-eventos')
             ->with('success', 'Evento creado correctamente.');
     }
 
     public function show($id)
-{
-    $evento = Eventos::findOrFail($id);
-    return view('events.detail', compact('evento'));
-}
+    {
+        $evento = Eventos::findOrFail($id);
+        return view('events.detail', compact('evento'));
+    }
     public function index()
-{
-    $hoy = now()->toDateString();
+    {
+        $hoy = now()->toDateString();
 
-    // Mostrar solo eventos que aún no han pasado
-    $eventos = \App\Models\Eventos::where('fecha', '>=', $hoy)
-                ->orderBy('fecha', 'asc')
-                ->get();
+        // Mostrar solo eventos que aún no han pasado
+        $eventos = \App\Models\Eventos::where('fecha', '>=', $hoy)
+            ->orderBy('fecha', 'asc')
+            ->get();
 
-    return view('events.index', compact('eventos'));
-}
-
+        return view('events.index', compact('eventos'));
+    }
 };
-

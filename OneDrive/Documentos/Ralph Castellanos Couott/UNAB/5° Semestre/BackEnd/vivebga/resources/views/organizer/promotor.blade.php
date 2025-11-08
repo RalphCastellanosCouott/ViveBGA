@@ -10,7 +10,7 @@
         <ul style="list-style: none; padding: 0; text-align: center;">
             <li><a href="#">Calificaciones</a></li>
             <li><a href="#">Mis eventos</a></li>
-            <li><a href="{{ route('promotor.index') }}">Crear evento</a></li>
+            <li><a href="{{ route('mis-eventos') }}">Crear evento</a></li>
             <li><a href="#">Editar perfil</a></li>
         </ul>
         <a href="{{ route('logout') }}" 
