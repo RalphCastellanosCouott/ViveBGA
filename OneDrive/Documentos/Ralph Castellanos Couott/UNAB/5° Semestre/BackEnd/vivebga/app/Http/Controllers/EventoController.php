@@ -4,67 +4,113 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Eventos;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class EventoController extends Controller
 {
-    public function store(Request $request)
+    // 🔹 Muestra los eventos del organizador autenticado para su perfil
+    public function perfilOrganizador($id)
     {
-        if (Auth::user()->role !== 'organizador') {
-            return redirect()
-                ->route('home')
-                ->with('error', 'Solo los organizadores pueden crear eventos.');
-        }
+        $organizador = User::findOrFail($id);
 
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'descripcion' => 'required|string',
-            'fecha' => 'required|date',
-            'hora' => 'required',
-            'direccion' => 'required|string|max:255',
-            'precio' => 'required|numeric|min:0',
-            'imagen' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
-
-        // Ruta por defecto si no sube imagen
-        $rutaImagen = null;
-
-        // Si se subió una imagen, guardarla en storage/app/public/eventos
-        if ($request->hasFile('imagen')) {
-            $rutaImagen = $request->file('imagen')->store('eventos', 'public');
-        }
-
-        // Crear evento con imagen incluida
-        Eventos::create([
-            'user_id' => Auth::id(),
-            'nombre' => $request->nombre,
-            'descripcion' => $request->descripcion,
-            'fecha' => $request->fecha,
-            'hora' => $request->hora,
-            'direccion' => $request->direccion,
-            'precio' => $request->precio,
-            'imagen' => $rutaImagen,
-        ]);
-
-        return redirect()
-            ->route('mis-eventos')
-            ->with('success', 'Evento creado correctamente.');
-    }
-
-    public function show($id)
-    {
-        $evento = Eventos::findOrFail($id);
-        return view('events.detail', compact('evento'));
-    }
-    public function index()
-    {
         $hoy = now()->toDateString();
 
-        // Mostrar solo eventos que aún no han pasado
-        $eventos = \App\Models\Eventos::where('fecha', '>=', $hoy)
+        $eventosProximos = Eventos::where('user_id', $organizador->id)
+            ->where('fecha', '>=', $hoy)
             ->orderBy('fecha', 'asc')
             ->get();
 
-        return view('events.index', compact('eventos'));
+        $eventosPasados = Eventos::where('user_id', $organizador->id)
+            ->where('fecha', '<', $hoy)
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        return view('organizer.profile', compact('organizador', 'eventosProximos', 'eventosPasados'));
     }
-};
+
+    // 🔹 Muestra el formulario de creación
+    public function create()
+    {
+        if (Auth::user()->role !== 'organizador') {
+            return redirect('/')
+                ->with('error', 'Solo los organizadores pueden acceder a esta vista.');
+        }
+
+        return view('events.create');
+    }
+
+    // 🔹 Guarda el evento
+    public function store(Request $request)
+    {
+        $request->validate(
+            [
+                'nombre' => 'required|string|max:255',
+                'descripcion' => 'required|string',
+                'fecha' => 'required|date',
+                'hora' => 'required',
+                'direccion' => 'required|string|max:255',
+                'precio' => 'nullable|numeric|min:0',
+                'imagen' => 'required|image|max:2048',
+            ],
+            [
+                'imagen.required' => 'Debes subir una imagen para el evento.',
+            ]
+        );
+
+        $evento = new Eventos($request->all());
+        $evento->user_id = Auth::id();
+
+        // Si el evento tiene cupos definidos, inicializa los cupos_disponibles
+        if (!is_null($request->cupos) && $request->cupos > 0) {
+            $evento->cupos_disponibles = $request->cupos;
+        } else {
+            // Si no tiene cupos limitados, deja el valor nulo
+            $evento->cupos = null;
+            $evento->cupos_disponibles = null;
+        }
+
+        if ($request->hasFile('imagen')) {
+            $evento->imagen = $request->file('imagen')->store('eventos', 'public');
+        }
+
+        $evento->save();
+
+        return redirect()->route('main')->with('success', 'Evento creado correctamente.');
+    }
+
+    // Muestra el detalle de un evento
+    public function show($id)
+    {
+        $evento = Eventos::withCount('registros')->findOrFail($id);
+        $usuarioAsistio = false;
+        $registroUsuario = null;
+        $hoy = now()->toDateString();
+
+        if (Auth::check()) {
+            $registro = $evento->registros()->where('user_id', Auth::id())->first();
+            if ($registro) {
+                $usuarioAsistio = true;
+                $registroUsuario = $registro;
+            }
+        }
+
+        $eventoRealizado = $usuarioAsistio && ($evento->fecha <= $hoy);
+
+        $totalRegistrados = $evento->registros()->sum('cantidad');
+
+        if (!is_null($evento->cupos)) {
+            $cuposDisponibles = max(($evento->cupos ?? 0) - $totalRegistrados, 0);
+        } else {
+            $cuposDisponibles = null; // Evento sin límite
+        }
+
+        return view('events.detail', compact(
+            'evento',
+            'usuarioAsistio',
+            'cuposDisponibles',
+            'registroUsuario',
+            'eventoRealizado'
+        ));
+    }
+}

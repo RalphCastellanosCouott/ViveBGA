@@ -13,11 +13,14 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('nombre');
             $table->text('descripcion');
+            $table->string('categoria');
             $table->date('fecha');
             $table->time('hora');
+            $table->integer('cupos')->nullable();
+            $table->integer('cupos_disponibles')->nullable();
             $table->string('direccion');
-            $table->decimal('precio', 10);
-            $table->string('imagen')->nullable();
+            $table->decimal('precio', 10)->nullable();
+            $table->string('imagen');
             $table->timestamps();
         });
     }

@@ -13,8 +13,11 @@ class Eventos extends Model
         'user_id',
         'nombre',
         'descripcion',
+        'categoria',
         'fecha',
         'hora',
+        'cupos',
+        'cupos_disponibles',
         'direccion',
         'precio',
         'imagen',
@@ -23,5 +26,10 @@ class Eventos extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function registros()
+    {
+        return $this->hasMany(EventRegistration::class, 'evento_id');
     }
 }

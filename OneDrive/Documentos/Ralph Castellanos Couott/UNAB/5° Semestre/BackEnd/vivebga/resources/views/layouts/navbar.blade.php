@@ -13,9 +13,6 @@
             <!-- Left Side Of Navbar -->
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ url('/') }}">Inicio</a></li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('eventos.index') }}">Eventos</a>
-                </li>
                 <li class="nav-item"><a class="nav-link" href="#">Lugares</a></li>
             </ul>
 
@@ -23,7 +20,7 @@
             <ul class="navbar-nav ms-auto">
                 @if (Auth::check() && Auth::user()->role === 'organizador')
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('crear-evento') }}">Crear evento</a>
+                        <a class="nav-link" href="{{ route('events.create') }}">Crear evento</a>
                     </li>
                 @endif
                 @guest
@@ -40,16 +37,23 @@
                     @endif
                 @else
                     <li class="nav-item dropdown">
-                        <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
-                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                        <a id="navbarDropdown" class="nav-link dropdown-toggle"
+                            href="{{ Auth::user()->role === 'organizador'
+                                ? route('organizer.profile', ['id' => Auth::id()])
+                                : route('user.profile') }}"
+                            role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {{ Auth::user()->name }}
                         </a>
 
                         <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="#">Perfil</a>
+                            <a class="dropdown-item"
+                                href="{{ Auth::user()->role === 'organizador'
+                                    ? route('organizer.profile', ['id' => Auth::id()])
+                                    : route('user.profile') }}">
+                                Perfil
+                            </a>
                             <a class="dropdown-item" href="{{ route('logout') }}"
-                                onclick="event.preventDefault();
-                                         document.getElementById('logout-form').submit();">
+                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 Cerrar sesión
                             </a>
 

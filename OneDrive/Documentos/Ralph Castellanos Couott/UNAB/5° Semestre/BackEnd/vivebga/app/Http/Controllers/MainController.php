@@ -8,13 +8,19 @@ use Carbon\Carbon;
 
 class MainController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Obtener solo eventos actuales y futuros
-        $eventos = Eventos::whereDate('fecha', '>=', Carbon::today())
-            ->orderBy('fecha', 'asc')
-            ->get();
+        $query = Eventos::query()
+            ->whereDate('fecha', '>=', Carbon::today());
 
-        return view('home', compact('eventos'));
+        // Filtro opcional por nombre o descripción
+        if ($request->filled('search')) {
+            $query->where('nombre', 'like', '%' . $request->search . '%')
+                ->orWhere('descripcion', 'like', '%' . $request->search . '%');
+        }
+
+        $eventos = $query->orderBy('fecha', 'asc')->get();
+        
+        return view('main', compact('eventos'));
     }
 }
