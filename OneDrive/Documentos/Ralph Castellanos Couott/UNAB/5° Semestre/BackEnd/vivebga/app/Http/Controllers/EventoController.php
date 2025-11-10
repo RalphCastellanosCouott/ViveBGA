@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Eventos;
+use App\Models\EventRegistration;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
@@ -112,5 +113,31 @@ class EventoController extends Controller
             'registroUsuario',
             'eventoRealizado'
         ));
+    }
+
+    public function cancelarInscripcion($id)
+    {
+        $evento = Eventos::findOrFail($id);
+        $user = Auth::user();
+
+        // Verifica si el usuario estaba inscrito
+        $registro = EventRegistration::where('evento_id', $evento->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$registro) {
+            return redirect()->back()->with('error', 'No estás registrado en este evento.');
+        }       
+
+        // Si el evento tiene cupos limitados, libera un cupo
+        if (!is_null($evento->cupos_disponibles)) {
+            $evento->cupos_disponibles += $registro->cantidad;
+            $evento->save();
+        }
+
+        // Elimina el registro
+        $registro->delete();
+
+        return redirect()->back()->with('success', 'Tu registro ha sido cancelado correctamente.');
     }
 }

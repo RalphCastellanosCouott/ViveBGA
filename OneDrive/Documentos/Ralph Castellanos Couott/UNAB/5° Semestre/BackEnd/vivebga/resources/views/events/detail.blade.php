@@ -4,8 +4,8 @@
     <div class="container" style="max-width: 900px; margin: 0 auto; padding: 30px;">
 
         {{-- Botón volver --}}
-        <a href="{{ url()->previous() }}" class="btn-volver">
-            ← Volver
+        <a href="{{ route('main') }}" class="btn-volver">
+            ← Volver al inicio
         </a>
 
         {{-- Imagen del evento --}}
@@ -52,10 +52,28 @@
             @endphp
 
             @if ($esCliente && !$esOrganizadorDelEvento)
-                @if (is_null($evento->cupos) || $cuposDisponibles > 0)
-                    <button id="btn-registrar" class="btn-registrar">Registrarme al evento</button>
+                @php
+                    // Verificar si el usuario ya está registrado
+                    $yaRegistrado = \App\Models\EventRegistration::where('evento_id', $evento->id)
+                        ->where('user_id', Auth::id())
+                        ->exists();
+                @endphp
+
+                @if ($yaRegistrado)
+                    {{-- Botón de cancelar registro --}}
+                    <form action="{{ route('eventos.cancelar', $evento->id) }}" method="POST"
+                        onsubmit="return confirm('¿Seguro que deseas cancelar tu registro a este evento?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-cancelar">Cancelar inscripción</button>
+                    </form>
                 @else
-                    <p><strong style="color: red;">🎟️ Entradas agotadas</strong></p>
+                    {{-- Botón para registrarse (solo si hay cupos) --}}
+                    @if (is_null($evento->cupos) || $cuposDisponibles > 0)
+                        <button id="btn-registrar" class="btn-registrar">Registrarme al evento</button>
+                    @else
+                        <p><strong style="color: red;">🎟️ Entradas agotadas</strong></p>
+                    @endif
                 @endif
             @elseif($esOrganizadorDelEvento)
                 <div class="alert alert-info mt-2">
