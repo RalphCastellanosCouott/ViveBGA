@@ -25,6 +25,8 @@ class User extends Authenticatable
         'apellido',
         'descripcion',
         'foto_perfil',
+        'telefono',
+        'ciudad',
     ];
 
     /**

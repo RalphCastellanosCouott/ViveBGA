@@ -112,10 +112,15 @@
         {{-- Botón para dejar reseña (solo si asistió y el evento ya ocurrió) --}}
         @php
             // Revisar si el usuario ya tiene reseña para este evento
-            $reseñaExistente = \App\Models\EventRegistration::find($registroUsuario->id);
+            $reseñaExistente = null;
+
+            if (!empty($registroUsuario)) {
+                $reseñaExistente = \App\Models\EventRegistration::find($registroUsuario->id);
+            }        
+    
         @endphp
 
-        @if ($usuarioAsistio && $eventoRealizado)
+        @if ($usuarioAsistio && $eventoRealizado && $registroUsuario)
             <button id="btn-reseña" class="btn-reseña">
                 {{ !empty($reseñaExistente->resena) ? 'Editar reseña' : 'Dejar reseña' }}
             </button>

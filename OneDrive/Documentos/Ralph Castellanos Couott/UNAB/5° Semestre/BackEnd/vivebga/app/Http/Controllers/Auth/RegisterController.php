@@ -67,25 +67,26 @@ class RegisterController extends Controller
      * @return \App\Models\User
      */
     protected function create(array $data)
-    {
+{
+    // Subida de imagen (opcional para clientes)
+    $fotoPath = null;
 
-        // Subida de imagen (opcional para clientes)
-        $fotoPath = null;
-
-        if (isset($data['foto_perfil']) && $data['foto_perfil'] instanceof \Illuminate\Http\UploadedFile) {
-            $fotoPath = $data['foto_perfil']->store('fotos_perfil', 'public');
-        }
-
-        $user = User::create([
-            'role' => $data['role'],
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'apellido' => $data['role'] === 'cliente' ? $data['apellido'] ?? null : null,
-            'descripcion' => $data['role'] === 'organizador' ? $data['descripcion'] ?? null : null,
-            'foto_perfil' => $fotoPath,
-        ]);
-
-        return $user;
+    if (isset($data['foto_perfil']) && $data['foto_perfil'] instanceof \Illuminate\Http\UploadedFile) {
+        $fotoPath = $data['foto_perfil']->store('fotos_perfil', 'public');
     }
+
+    $user = User::create([
+        'role' => $data['role'],
+        'name' => $data['name'],
+        'email' => $data['email'],
+        'password' => Hash::make($data['password']),
+        'apellido' => $data['role'] === 'cliente' ? ($data['apellido'] ?? null) : null,
+        'descripcion' => $data['role'] === 'organizador' ? ($data['descripcion'] ?? null) : null,
+        'foto_perfil' => $fotoPath ? 'storage/' . $fotoPath : null, // ✅ RUTA PÚBLICA
+    ]);
+
+    return $user;
 }
+
+};
+

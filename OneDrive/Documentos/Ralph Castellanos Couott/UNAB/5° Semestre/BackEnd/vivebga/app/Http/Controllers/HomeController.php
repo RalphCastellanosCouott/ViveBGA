@@ -15,7 +15,7 @@ class HomeController extends Controller
         $this->middleware('auth');
     }
 
-    // Página principal con eventos próximos
+    // 🏠 Página principal (eventos disponibles)
     public function index()
     {
         $eventos = Eventos::whereDate('fecha', '>=', Carbon::today())
@@ -25,39 +25,58 @@ class HomeController extends Controller
         return view('main', compact('eventos'));
     }
 
-    // Perfil único según rol
+    // 👤 PERFIL del cliente (solo información del usuario)
     public function perfil()
+    {
+        $user = Auth::user();
+        return view('user.profile', compact('user'));
+    }
+
+    // ✏️ FORMULARIO para editar el perfil
+    public function editarPerfil()
+    {
+        $user = Auth::user();
+        return view('user.edit', compact('user'));
+    }
+
+    // 💾 ACTUALIZAR perfil
+    public function update(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|email|unique:users,email,' . $user->id,
+            'telefono'  => 'nullable|string|max:20',
+            'ciudad'    => 'nullable|string|max:100',
+        ]);
+
+        $user->update([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'telefono' => $request->telefono,
+            'ciudad'   => $request->ciudad,
+        ]);
+
+        return redirect()->route('user.profile')->with('success', '✅ Perfil actualizado correctamente.');
+    }
+
+    // 🎟️ Muestra los eventos del cliente
+    public function misEventos()
     {
         $user = Auth::user();
         $hoy = Carbon::today()->toDateString();
 
-        if ($user->role === 'organizador') {
-            // Eventos creados por el organizador
-            $eventos_proximos = Eventos::where('user_id', $user->id)
-                ->where('fecha', '>=', $hoy)
-                ->orderBy('fecha', 'asc')
-                ->get();
+        // Buscar los eventos en los que está inscrito el cliente
+        $registros = EventRegistration::with('evento')
+            ->where('user_id', $user->id)
+            ->get();
 
-            $eventos_pasados = Eventos::where('user_id', $user->id)
-                ->where('fecha', '<', $hoy)
-                ->orderBy('fecha', 'desc')
-                ->get();
-        } else {
-            // Eventos en los que está registrado el cliente
-            $registros = EventRegistration::with('evento')
-                ->where('user_id', $user->id)
-                ->get();
+        // Separar los eventos según la fecha
+        $eventos_proximos = $registros->filter(fn($r) => $r->evento->fecha >= $hoy);
+        $eventos_pasados  = $registros->filter(fn($r) => $r->evento->fecha < $hoy);
 
-            $eventos_proximos = $registros->filter(function ($registro) use ($hoy) {
-                return $registro->evento->fecha >= $hoy;
-            });
-
-            $eventos_pasados = $registros->filter(function ($registro) use ($hoy) {
-                return $registro->evento->fecha < $hoy;
-            });
-        }
-
-        return view('user.profile', compact('user', 'eventos_proximos', 'eventos_pasados'));
+        return view('user.events', compact('user', 'eventos_proximos', 'eventos_pasados'));
     }
 
     public function welcome()
