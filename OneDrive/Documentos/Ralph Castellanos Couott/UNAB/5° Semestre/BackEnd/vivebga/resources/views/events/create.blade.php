@@ -31,8 +31,17 @@
             <label>Descripción:</label>
             <textarea name="descripcion" rows="3" required>{{ old('descripcion') }}</textarea>
 
-            <label>Categoría:</label>
-            <input type="text" name="categoria" value="{{ old('categoria') }}" required>
+            <div class="mb-3">
+                <label for="categoria" class="form-label">Categoría del evento</label>
+                 <select name="categoria" id="categoria" class="form-select" required>
+                     <option value="">Seleccione una categoría</option>
+                     @foreach($categorias as $cat)
+                        <option value="{{ $cat }}" {{ old('categoria') == $cat ? 'selected' : '' }}>
+                             {{ $cat }}
+                        </option>
+                     @endforeach
+                </select>
+            </div>
 
             <label>Fecha:</label>
             <input type="date" name="fecha" value="{{ old('fecha') }}" required>

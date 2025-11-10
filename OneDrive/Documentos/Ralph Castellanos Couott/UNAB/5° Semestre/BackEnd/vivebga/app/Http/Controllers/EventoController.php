@@ -40,7 +40,18 @@ class EventoController extends Controller
                 ->with('error', 'Solo los organizadores pueden acceder a esta vista.');
         }
 
-        return view('events.create');
+        $categorias = [
+        'Música',
+        'Deportes',
+        'Arte',
+        'Tecnología',
+        'Gastronomía',
+        'Educación',
+        'Salud',
+        'Otro',
+        ];
+
+        return view('events.create', compact('categorias'));
     }
 
     public function store(Request $request)
@@ -138,22 +149,46 @@ class EventoController extends Controller
         ));
     } 
     
-    
     public function search(Request $request)
     {
     $query = $request->input('query');
+    $categoria = $request->input('categoria');
 
-    $eventos = Eventos::where('nombre', 'LIKE', "%{$query}%")
-        ->orWhereHas('user', function($q) use ($query) {
-            $words = explode(' ', $query);
-            foreach ($words as $word) {
-                $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($word) . '%']);
-            }
-        })
-        ->get();
+    $eventosQuery = Eventos::query();
 
-    return view('main', compact('eventos', 'query'));
-    
+    // Agrupamos la búsqueda por nombre del evento o nombre del organizador
+    if ($query) {
+        $eventosQuery->where(function($q) use ($query) {
+            $q->where('nombre', 'LIKE', "%{$query}%")
+              ->orWhereHas('user', function($q2) use ($query) {
+                  $words = explode(' ', $query);
+                  foreach ($words as $word) {
+                      $q2->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($word) . '%']);
+                  }
+              });
+        });
     }
-}
-        
+
+    // Filtrar por categoría
+    if ($categoria) {
+        $eventosQuery->where('categoria', $categoria);
+    }
+
+    $eventos = $eventosQuery->get();
+
+    // Lista oficial de categorías
+    $categorias = [
+        'Música',
+        'Deportes',
+        'Arte',
+        'Tecnología',
+        'Gastronomía',
+        'Educación',
+        'Salud',
+        'Otro',
+    ];
+
+    return view('main', compact('eventos', 'query', 'categoria', 'categorias'));
+    }
+ };   
+    
