@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Eventos;
 use App\Models\EventRegistration;
+use Carbon\Carbon;
+use Carbon\CarbonTimeZone;
 use Illuminate\Support\Facades\Auth;
 
 class EventRegistrationController extends Controller
@@ -50,6 +52,41 @@ class EventRegistrationController extends Controller
         return redirect()->back()->with('success', 'Te has registrado correctamente al evento.');
     }
 
+    public function cancelarInscripcion($id)
+    {
+        $evento = Eventos::findOrFail($id);
+        $user = Auth::user();
+
+        // Verifica si el usuario estaba inscrito
+        $registro = EventRegistration::where('evento_id', $evento->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$registro) {
+            return redirect()->back()->with('error', 'No estás registrado en este evento.');
+        }
+
+        // Zona horaria y hora del evento
+        $zona = new \Carbon\CarbonTimeZone('America/Bogota');
+        $inicioEvento = \Carbon\Carbon::parse($evento->fecha . ' ' . $evento->hora, $zona);
+
+        // Verifica que el evento no haya iniciado (ni pasen 15 minutos)
+        if (now($zona)->gte($inicioEvento->copy()->addMinutes(15))) {
+            return redirect()->back()->with('error', 'No puedes cancelar la inscripción después de iniciado el evento.');
+        }
+
+        // Si el evento tiene cupos limitados, libera un cupo
+        if (!is_null($evento->cupos_disponibles)) {
+            $evento->cupos_disponibles += $registro->cantidad;
+            $evento->save();
+        }
+
+        // Elimina el registro
+        $registro->delete();
+
+        return redirect()->back()->with('success', 'Tu registro ha sido cancelado correctamente.');
+    }
+
     // 🔹 Mostrar los eventos en los que el cliente está registrado
     public function misRegistros()
     {
@@ -61,27 +98,36 @@ class EventRegistrationController extends Controller
     }
 
     // 🔹 Dejar reseña sobre un evento (solo si ya ocurrió)
-    public function dejarReseña(Request $request, $registroId)
+    public function dejarResena(Request $request, $registroId)
     {
         $registro = EventRegistration::findOrFail($registroId);
 
-        // Validamos que el usuario sea el dueño
+        // Validar que el usuario sea dueño de la inscripción
         if ($registro->user_id !== Auth::id()) {
             abort(403);
         }
 
-        // Validamos que el evento ya haya pasado
-        if ($registro->evento->fecha > now()->toDateString()) {
-            return redirect()->back()->with('error', 'Solo puedes dejar reseña de eventos que ya ocurrieron.');
+        // Validar que el evento ya haya pasado (fecha + hora)
+        $zonaHoraria = new CarbonTimeZone('America/Bogota');
+        $evento = $registro->evento;
+        $fechaHoraEvento = Carbon::parse($evento->fecha . ' ' . $evento->hora, $zonaHoraria);
+
+        if (now()->lessThan($fechaHoraEvento->addMinutes(10))) {
+            return redirect()->back()->with('error', 'Solo puedes dejar una reseña después de que el evento haya ocurrido.');
         }
 
+        // Validar campos del formulario
         $request->validate([
-            'reseña' => 'required|string|max:1000',
+            'calificacion' => 'required|integer|min:1|max:5',
+            'resena' => 'required|string|max:1000',
         ]);
 
-        $registro->reseña = $request->reseña;
-        $registro->save();
+        // Guardar reseña
+        $registro->update([
+            'calificacion' => $request->calificacion,
+            'resena' => $request->resena,
+        ]);
 
-        return redirect()->back()->with('success', 'Reseña guardada correctamente.');
+        return redirect()->back()->with('success', '¡Tu reseña ha sido registrada exitosamente!');
     }
 }

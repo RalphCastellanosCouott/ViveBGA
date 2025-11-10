@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Eventos;
 use App\Models\EventRegistration;
 use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonTimeZone;
 use Illuminate\Support\Facades\Auth;
 
 class EventoController extends Controller
@@ -83,61 +85,43 @@ class EventoController extends Controller
     // Muestra el detalle de un evento
     public function show($id)
     {
-        $evento = Eventos::withCount('registros')->findOrFail($id);
-        $usuarioAsistio = false;
+        $evento = Eventos::with('user')->findOrFail($id);
+        $usuario = Auth::user();
         $registroUsuario = null;
-        $hoy = now()->toDateString();
+        $usuarioAsistio = false;
+        $eventoRealizado = false;
 
-        if (Auth::check()) {
-            $registro = $evento->registros()->where('user_id', Auth::id())->first();
-            if ($registro) {
-                $usuarioAsistio = true;
-                $registroUsuario = $registro;
-            }
+        $cuposDisponibles = !is_null($evento->cupos)
+            ? $evento->cupos_disponibles
+            : null;
+
+        // Obtener registro del usuario (si está logueado)
+        if ($usuario) {
+            $registroUsuario = EventRegistration::where('user_id', $usuario->id)
+                ->where('evento_id', $evento->id)
+                ->first();
+
+            $usuarioAsistio = $registroUsuario ? true : false;
         }
 
-        $eventoRealizado = $usuarioAsistio && ($evento->fecha <= $hoy);
-
-        $totalRegistrados = $evento->registros()->sum('cantidad');
-
-        if (!is_null($evento->cupos)) {
-            $cuposDisponibles = max(($evento->cupos ?? 0) - $totalRegistrados, 0);
-        } else {
-            $cuposDisponibles = null; // Evento sin límite
-        }
+        $zonaHoraria = new CarbonTimeZone('America/Bogota');
+        $fechaHoraEvento = Carbon::parse($evento->fecha . ' ' . $evento->hora, $zonaHoraria);
+        $ahora = Carbon::now($zonaHoraria);
+        $eventoRealizado = $ahora->greaterThanOrEqualTo($fechaHoraEvento->copy()->addMinutes(10));
+        $registroBloqueado = $ahora->greaterThanOrEqualTo($fechaHoraEvento->copy()->addMinutes(15));
+        $resenas = EventRegistration::where('evento_id', $evento->id)
+            ->whereNotNull('resena')
+            ->with('user')
+            ->get();
 
         return view('events.detail', compact(
             'evento',
-            'usuarioAsistio',
             'cuposDisponibles',
+            'usuarioAsistio',
             'registroUsuario',
-            'eventoRealizado'
+            'eventoRealizado',
+            'resenas',
+            'registroBloqueado'
         ));
-    }
-
-    public function cancelarInscripcion($id)
-    {
-        $evento = Eventos::findOrFail($id);
-        $user = Auth::user();
-
-        // Verifica si el usuario estaba inscrito
-        $registro = EventRegistration::where('evento_id', $evento->id)
-            ->where('user_id', $user->id)
-            ->first();
-
-        if (!$registro) {
-            return redirect()->back()->with('error', 'No estás registrado en este evento.');
-        }       
-
-        // Si el evento tiene cupos limitados, libera un cupo
-        if (!is_null($evento->cupos_disponibles)) {
-            $evento->cupos_disponibles += $registro->cantidad;
-            $evento->save();
-        }
-
-        // Elimina el registro
-        $registro->delete();
-
-        return redirect()->back()->with('success', 'Tu registro ha sido cancelado correctamente.');
-    }
+    }    
 }

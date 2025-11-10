@@ -49,30 +49,49 @@
             @php
                 $esCliente = Auth::user()->role === 'cliente';
                 $esOrganizadorDelEvento = Auth::id() === $evento->user->id;
+
+                // ¿ya está registrado el usuario?
+                $yaRegistrado = \App\Models\EventRegistration::where('evento_id', $evento->id)
+                    ->where('user_id', Auth::id())
+                    ->exists();
+
+                // Combinar fecha + hora y comparar en la zona America/Bogota
+                $zona = new \Carbon\CarbonTimeZone('America/Bogota');
+                $inicioEvento = \Carbon\Carbon::parse($evento->fecha . ' ' . $evento->hora, $zona);
+                $ahora = \Carbon\Carbon::now($zona);
+
+                // Bloquear registro si ya pasaron 15 minutos desde el inicio
+                $bloquearRegistro = $ahora->gte($inicioEvento->copy()->addMinutes(15));
+
+                // Bloquear cancelación si ya pasaron 15 minutos desde el inicio
+                $bloquearCancelacion = $ahora->gte($inicioEvento->copy()->addMinutes(15));
             @endphp
 
             @if ($esCliente && !$esOrganizadorDelEvento)
-                @php
-                    // Verificar si el usuario ya está registrado
-                    $yaRegistrado = \App\Models\EventRegistration::where('evento_id', $evento->id)
-                        ->where('user_id', Auth::id())
-                        ->exists();
-                @endphp
-
                 @if ($yaRegistrado)
-                    {{-- Botón de cancelar registro --}}
-                    <form action="{{ route('eventos.cancelar', $evento->id) }}" method="POST"
-                        onsubmit="return confirm('¿Seguro que deseas cancelar tu registro a este evento?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn-cancelar">Cancelar inscripción</button>
-                    </form>
-                @else
-                    {{-- Botón para registrarse (solo si hay cupos) --}}
-                    @if (is_null($evento->cupos) || $cuposDisponibles > 0)
-                        <button id="btn-registrar" class="btn-registrar">Registrarme al evento</button>
+                    {{-- Verificar si el evento ya comenzó hace más de 15 minutos --}}
+                    @if ($bloquearCancelacion)
+                        <p><strong style="color: red;">🚫 Ya no puedes cancelar la inscripción (el evento ya comenzó).</strong>
+                        </p>
                     @else
-                        <p><strong style="color: red;">🎟️ Entradas agotadas</strong></p>
+                        <form action="{{ route('eventos.cancelar', $evento->id) }}" method="POST"
+                            onsubmit="return confirm('¿Seguro que deseas cancelar tu registro a este evento?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-cancelar">Cancelar inscripción</button>
+                        </form>
+                    @endif
+                @else
+                    {{-- Verificar si el evento ya comenzó hace más de 15 minutos --}}
+                    @if ($bloquearRegistro)
+                        <p><strong style="color: red;">🚫 El registro está cerrado (el evento ya comenzó).</strong></p>
+                    @else
+                        {{-- Botón para registrarse (solo si hay cupos) --}}
+                        @if (is_null($evento->cupos) || $cuposDisponibles > 0)
+                            <button id="btn-registrar" class="btn-registrar">Registrarme al evento</button>
+                        @else
+                            <p><strong style="color: red;">🎟️ Entradas agotadas</strong></p>
+                        @endif
                     @endif
                 @endif
             @elseif($esOrganizadorDelEvento)
@@ -90,11 +109,35 @@
             </div>
         @endauth
 
-        {{-- Botón para dejar reseña (solo si asistió) --}}
+        {{-- Botón para dejar reseña (solo si asistió y el evento ya ocurrió) --}}
+        @php
+            // Revisar si el usuario ya tiene reseña para este evento
+            $reseñaExistente = \App\Models\EventRegistration::find($registroUsuario->id);
+        @endphp
+
         @if ($usuarioAsistio && $eventoRealizado)
-            <button id="btn-reseña" class="btn-reseña">Dejar reseña</button>
+            <button id="btn-reseña" class="btn-reseña">
+                {{ !empty($reseñaExistente->resena) ? 'Editar reseña' : 'Dejar reseña' }}
+            </button>
         @endif
 
+        {{-- ========================= --}}
+        {{-- Sección de reseñas públicas --}}
+        {{-- ========================= --}}
+        @if ($resenas->count() > 0)
+            <div class="reseñas-container" style="margin-top: 40px;">
+                <h3>Reseñas de asistentes</h3>
+                @foreach ($resenas as $resena)
+                    <div class="reseña"
+                        style="border:1px solid #ddd; border-radius:10px; padding:15px; margin-bottom:10px;">
+                        <p><strong>{{ $resena->user->name }}</strong> — {{ $resena->calificacion }} ⭐</p>
+                        <p>{{ $resena->comentario }}</p>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p style="margin-top: 30px;">Aún no hay reseñas para este evento.</p>
+        @endif
     </div>
 
     {{-- MODALES FUERA DEL CONTAINER --}}
@@ -125,21 +168,27 @@
                 <span class="close">&times;</span>
                 <h3>Reseña del evento</h3>
 
-                <form method="POST" action="{{ route('eventos.reseña', $registroUsuario->id) }}">
+                <form method="POST" action="{{ route('eventos.resena', $registroUsuario->id) }}">
                     @csrf
                     <input type="hidden" name="evento_id" value="{{ $evento->id }}">
+
                     <label for="calificacion">Calificación:</label>
                     <select name="calificacion" id="calificacion" required>
                         <option value="">Selecciona</option>
-                        <option value="1">1 ⭐</option>
-                        <option value="2">2 ⭐</option>
-                        <option value="3">3 ⭐</option>
-                        <option value="4">4 ⭐</option>
-                        <option value="5">5 ⭐</option>
+                        @for ($i = 1; $i <= 5; $i++)
+                            <option value="{{ $i }}"
+                                {{ $reseñaExistente->calificacion == $i ? 'selected' : '' }}>
+                                {{ $i }} ⭐
+                            </option>
+                        @endfor
                     </select>
-                    <label for="comentario">Comentario:</label>
-                    <textarea name="comentario" id="comentario" rows="4" required></textarea>
-                    <button type="submit">Enviar reseña</button>
+
+                    <label for="resena">Comentario:</label>
+                    <textarea name="resena" id="resena" rows="4" required>{{ $reseñaExistente->resena ?? '' }}</textarea>
+
+                    <button type="submit">
+                        {{ !empty($reseñaExistente->resena) ? 'Actualizar reseña' : 'Enviar reseña' }}
+                    </button>
                 </form>
             </div>
         </div>
@@ -148,45 +197,48 @@
 
 @section('scripts')
     <script>
-        // Modal registro
-        var modalRegistrar = document.getElementById("modal-registrar");
-        var btnRegistrar = document.getElementById("btn-registrar");
-        var spanCerrar = modalRegistrar.querySelector(".close");
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Modal registro ---
+            const modalRegistrar = document.getElementById("modal-registrar");
+            const btnRegistrar = document.getElementById("btn-registrar");
 
-        btnRegistrar.onclick = () => modalRegistrar.style.display = "block";
-        spanCerrar.onclick = () => modalRegistrar.style.display = "none";
-        window.onclick = (e) => {
-            if (e.target == modalRegistrar) modalRegistrar.style.display = "none";
-        }
-
-        // Actualizar total si es de pago
-        var precio = {{ $evento->precio ?? 0 }};
-        var cantidadInput = document.getElementById("cantidad");
-        var totalSpan = document.getElementById("total");
-        if (cantidadInput && totalSpan) {
-            cantidadInput.addEventListener("input", function() {
-                let total = precio * this.value;
-                totalSpan.textContent = new Intl.NumberFormat('es-CO').format(total);
-            });
-        }
-
-        // Modal reseña (solo si existe en el DOM)
-        @if (!empty($usuarioAsistio) && !empty($eventoRealizado))
-            var modalReseña = document.getElementById("modal-reseña");
-            var btnReseña = document.getElementById("btn-reseña");
-            if (modalReseña && btnReseña) {
-                var spanCerrarReseña = modalReseña.querySelector(".close");
-
-                btnReseña.onclick = function() {
-                    modalReseña.style.display = "block";
-                };
-                spanCerrarReseña.onclick = function() {
-                    modalReseña.style.display = "none";
-                };
-                window.addEventListener('click', function(e) {
-                    if (e.target == modalReseña) modalReseña.style.display = "none";
+            if (modalRegistrar && btnRegistrar) {
+                const spanCerrar = modalRegistrar.querySelector(".close");
+                btnRegistrar.addEventListener("click", () => modalRegistrar.style.display = "block");
+                spanCerrar.addEventListener("click", () => modalRegistrar.style.display = "none");
+                window.addEventListener("click", (e) => {
+                    if (e.target === modalRegistrar) modalRegistrar.style.display = "none";
                 });
             }
-        @endif
+
+            // --- Actualizar total si es de pago ---
+            const precio = {{ $evento->precio ?? 0 }};
+            const cantidadInput = document.getElementById("cantidad");
+            const totalSpan = document.getElementById("total");
+
+            if (cantidadInput && totalSpan) {
+                cantidadInput.addEventListener("input", function() {
+                    let total = precio * this.value;
+                    totalSpan.textContent = new Intl.NumberFormat('es-CO').format(total);
+                });
+            }
+
+            // --- Modal reseña ---
+            const modalReseña = document.getElementById("modal-reseña");
+            const btnReseña = document.getElementById("btn-reseña");
+
+            if (modalReseña && btnReseña) {
+                const spanCerrarReseña = modalReseña.querySelector(".close");
+                btnReseña.addEventListener("click", function() {
+                    modalReseña.style.display = "block";
+                });
+                spanCerrarReseña.addEventListener("click", function() {
+                    modalReseña.style.display = "none";
+                });
+                window.addEventListener("click", function(e) {
+                    if (e.target === modalReseña) modalReseña.style.display = "none";
+                });
+            }
+        });
     </script>
 @endsection

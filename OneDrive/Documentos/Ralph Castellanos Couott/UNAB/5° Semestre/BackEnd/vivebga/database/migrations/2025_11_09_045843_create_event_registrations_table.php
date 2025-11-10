@@ -14,7 +14,8 @@ return new class extends Migration
             $table->foreignId('evento_id')->constrained('eventos')->onDelete('cascade'); 
             $table->integer('cantidad')->default(1);
             $table->decimal('precio_pagado', 10)->nullable();
-            $table->text('reseña')->nullable();
+            $table->tinyInteger('calificacion')->nullable();
+            $table->text('resena')->nullable();
             $table->timestamps();
         });
     }

@@ -15,18 +15,19 @@ class EventRegistration extends Model
         'evento_id',
         'cantidad',
         'precio_pagado',
-        'reseña',
+        'calificacion',
+        'resena',
     ];
 
     // 🔹 Relación con el usuario
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // 🔹 Relación con el evento
     public function evento()
     {
-        return $this->belongsTo(Eventos::class);
+        return $this->belongsTo(Eventos::class, 'evento_id');
     }
 }

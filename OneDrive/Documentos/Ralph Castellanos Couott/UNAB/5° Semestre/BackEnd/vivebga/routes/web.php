@@ -41,9 +41,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('eventos.registrar');
 
     // Cancelar un registro a un evento
-    Route::delete('/eventos/{id}/cancelar', [EventoController::class, 'cancelarInscripcion'])->name('eventos.cancelar');
+    Route::delete('/eventos/{id}/cancelar', [EventRegistrationController::class, 'cancelarInscripcion'])->name('eventos.cancelar');
 
     // Dejar reseña de un evento (solo si ya ocurrió)
-    Route::post('/registros/{registro}/reseña', [EventRegistrationController::class, 'dejarReseña'])
-        ->name('eventos.reseña');
+    Route::post('/registros/{registro}/reseña', [EventRegistrationController::class, 'dejarResena'])
+        ->name('eventos.resena');
 });
