@@ -44,7 +44,7 @@ class EventoController extends Controller
     }
 
     public function store(Request $request)
-{
+    {
     $request->validate(
         [
             'nombre' => 'required|string|max:255',
@@ -92,7 +92,7 @@ class EventoController extends Controller
     $evento->save();
 
     return redirect()->route('main')->with('success', 'Evento creado correctamente.');
-}
+    }
 
 
     // Muestra el detalle de un evento
@@ -136,5 +136,24 @@ class EventoController extends Controller
             'resenas',
             'registroBloqueado'
         ));
-    }    
+    } 
+    
+    
+    public function search(Request $request)
+    {
+    $query = $request->input('query');
+
+    $eventos = Eventos::where('nombre', 'LIKE', "%{$query}%")
+        ->orWhereHas('user', function($q) use ($query) {
+            $words = explode(' ', $query);
+            foreach ($words as $word) {
+                $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($word) . '%']);
+            }
+        })
+        ->get();
+
+    return view('main', compact('eventos', 'query'));
+    
+    }
 }
+        

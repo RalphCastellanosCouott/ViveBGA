@@ -23,11 +23,13 @@ class Eventos extends Model
         'imagen',
     ];
 
+    // Relación con el organizador
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
+    // Relación con los registros de usuarios
     public function registros()
     {
         return $this->hasMany(EventRegistration::class, 'evento_id');

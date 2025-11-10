@@ -54,7 +54,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('eventos.resena');
 
 
-    
+     // Barra de busqueda
+
+    Route::get('/search', [EventoController::class, 'search'])->name('event.search');
 
     Route::get('/mapa-eventos', [MapController::class, 'index'])->name('mapa.eventos');
 

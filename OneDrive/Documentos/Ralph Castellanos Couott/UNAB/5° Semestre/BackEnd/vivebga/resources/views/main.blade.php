@@ -2,6 +2,11 @@
 
 @section('content')
     <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+        {{-- Formulario de búsqueda --}}
+    <form action="{{ route('event.search') }}" method="GET" class="mb-4 d-flex justify-content-center">
+        <input type="text" name="query" class="form-control me-2" placeholder="Buscar eventos u organizadores..." value="{{ request('query') }}" style="max-width: 400px;">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
 
         <h1 style="text-align: center; margin-bottom: 30px;">Eventos disponibles</h1>
 
