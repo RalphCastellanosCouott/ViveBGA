@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\EventoController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\HomeController;
@@ -46,4 +46,10 @@ Route::middleware(['auth'])->group(function () {
     // Dejar reseña de un evento (solo si ya ocurrió)
     Route::post('/registros/{registro}/reseña', [EventRegistrationController::class, 'dejarResena'])
         ->name('eventos.resena');
+
+
+    
+
+    Route::get('/mapa-eventos', [MapController::class, 'index'])->name('mapa.eventos');
+    
 });
