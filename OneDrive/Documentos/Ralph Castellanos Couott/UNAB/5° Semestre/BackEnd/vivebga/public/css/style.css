@@ -286,10 +286,8 @@ strong {
     font-weight: 600;
 }
 
-/* ==========================
-   Modales
-========================== */
-.modal {
+/* ========================== Modales ========================== */
+.evento-modal {
     display: none;
     position: fixed;
     z-index: 1000;

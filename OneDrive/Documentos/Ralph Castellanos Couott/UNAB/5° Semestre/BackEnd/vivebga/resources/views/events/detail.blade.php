@@ -116,8 +116,8 @@
 
             if (!empty($registroUsuario)) {
                 $reseñaExistente = \App\Models\EventRegistration::find($registroUsuario->id);
-            }        
-    
+            }
+
         @endphp
 
         @if ($usuarioAsistio && $eventoRealizado && $registroUsuario)
@@ -147,7 +147,7 @@
 
     {{-- MODALES FUERA DEL CONTAINER --}}
     {{-- Modal de registro --}}
-    <div id="modal-registrar" class="modal">
+    <div id="modal-registrar" class="evento-modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h3>Registrarse al evento</h3>
@@ -168,7 +168,7 @@
 
     {{-- Modal de reseña: solo si el usuario asistió y el evento ya ocurrió --}}
     @if (!empty($usuarioAsistio) && !empty($eventoRealizado))
-        <div id="modal-reseña" class="modal">
+        <div id="modal-reseña" class="evento-modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h3>Reseña del evento</h3>
