@@ -1,0 +1,138 @@
+/* =====================
+   General admin
+===================== */
+body {
+    font-family: 'Nunito', sans-serif;
+    background-color: #fdf6f0;
+    color: #2f3640;
+}
+
+/* =====================
+   Navbar admin
+===================== */
+.navbar {
+    background: linear-gradient(90deg, #2f3640, #576574);
+    color: #fff;
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link {
+    color: #fff !important;
+}
+
+.navbar .nav-link:hover {
+    color: #ff9a76 !important;
+}
+
+/* =====================
+   Sidebar
+===================== */
+.bg-dark {
+    background: linear-gradient(180deg, #2f3640, #576574) !important;
+}
+
+.bg-dark .nav-link {
+    color: #fff;
+}
+
+.bg-dark .nav-link:hover,
+.bg-dark .nav-link.active {
+    color: #ff9a76;
+    font-weight: 600;
+}
+
+/* =====================
+   Cards resumen
+===================== */
+.card {
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+/* =====================
+   Tablas admin
+===================== */
+.table {
+    background-color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: linear-gradient(90deg, #2f3640, #576574);
+    color: #fff;
+    border: none;
+}
+
+.table tbody tr:hover {
+    background-color: #fdf3e6;
+}
+
+/* =====================
+   Botones
+===================== */
+.btn {
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b, #ff4c4c);
+    border: none;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #ff4c4c, #ff1f1f);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #51cf66, #70e000);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #40c057, #5ecc00);
+    border: none;
+}
+
+/* =====================
+   Formularios
+===================== */
+input,
+select,
+textarea {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 5px rgba(255, 107, 107, 0.25);
+    outline: none;
+}
+
+/* =====================
+   Badges
+===================== */
+.badge-success {
+    background-color: #51cf66 !important;
+}
+
+.badge-secondary {
+    background-color: #ffe66d !important;
+}
+
+/* =====================
+   Scroll lateral (sidebar) */
+.vh-100 {
+    overflow-y: auto;
+}
