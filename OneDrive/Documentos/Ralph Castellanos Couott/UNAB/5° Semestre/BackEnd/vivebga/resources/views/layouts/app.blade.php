@@ -26,7 +26,11 @@
 
 <body>
     <div id="app">
-        @include('layouts.navbar')
+        @if (Auth::check() && Auth::user()->role === 'admin')
+            @include('layouts.nav_admin')
+        @else
+            @include('layouts.navbar')
+        @endif
 
         <main class="py-4">
             @yield('content')

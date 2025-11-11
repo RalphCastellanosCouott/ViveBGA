@@ -27,6 +27,7 @@ class User extends Authenticatable
         'foto_perfil',
         'telefono',
         'ciudad',
+        'permiso_evento'
     ];
 
     /**

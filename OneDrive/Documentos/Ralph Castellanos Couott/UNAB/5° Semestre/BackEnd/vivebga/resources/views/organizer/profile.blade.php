@@ -5,7 +5,7 @@
         {{-- Datos del organizador --}}
         <div style="display: flex; align-items: center; margin-bottom: 30px;">
             @if ($organizador->foto_perfil)
-                <img src="{{ asset('storage/' . $organizador->foto_perfil) }}" alt="Foto de perfil"
+                <img src="{{ asset($organizador->foto_perfil) }}" alt="Foto de perfil"
                     style="width:120px; height:120px; border-radius:50%; object-fit:cover; margin-right:20px;">
             @else
                 <div style="width:120px; height:120px; border-radius:50%; background:#ddd; margin-right:20px;"></div>
