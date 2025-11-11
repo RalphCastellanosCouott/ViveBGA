@@ -42,7 +42,6 @@
                             @endif
                         </p>
                         <a href="{{ route('events.detail', $evento->id) }}">Ver detalles</a>
-                        <a href="#" style="margin-left:10px;">Editar</a>
                     </div>
                 @endforeach
             </div>
