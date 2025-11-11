@@ -1,19 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('content')
     <div class="container-fluid">
         <div class="row">
-            <!-- Barra lateral -->
-            <div class="col-md-3 col-lg-2 bg-dark text-white vh-100 p-3">
-                <h4 class="mb-4">Panel Admin</h4>
-                <ul class="nav flex-column">
-                    <li class="nav-item"><a href="#" class="nav-link text-white">Clientes</a></li>
-                    <li class="nav-item"><a href="#" class="nav-link text-white">Organizadores</a></li>
-                    <li class="nav-item"><a href="#" class="nav-link text-white">Eventos</a></li>
-                    <li class="nav-item"><a href="#" class="nav-link text-white">Permisos</a></li>
-                </ul>
-            </div>
-
+            
             <!-- Contenido principal -->
             <div class="col-md-9 col-lg-10 p-5">
                 <h2 class="mb-4">Resumen General</h2>

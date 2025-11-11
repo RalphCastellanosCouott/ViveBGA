@@ -18,7 +18,7 @@
 
             <!-- Right Side Of Navbar -->
             <ul class="navbar-nav ms-auto">
-                @if (Auth::check() && Auth::user()->role === 'organizador')
+                @if (Auth::check() && Auth::user()->role === 'organizador' && Auth::user()->permiso_evento)
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('events.create') }}">Crear evento</a>
                     </li>

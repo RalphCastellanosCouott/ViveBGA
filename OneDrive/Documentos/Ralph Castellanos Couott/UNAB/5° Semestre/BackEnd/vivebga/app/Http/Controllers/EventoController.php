@@ -35,9 +35,11 @@ class EventoController extends Controller
     // 🔹 Muestra el formulario de creación
     public function create()
     {
-        if (Auth::user()->role !== 'organizador') {
+
+        $usuario = Auth::user();
+        if ($usuario->role !== 'organizador' || !$usuario->permiso_evento) {
             return redirect('/')
-                ->with('error', 'Solo los organizadores pueden acceder a esta vista.');
+                ->with('error', 'No tienes permiso para crear eventos.');
         }
 
         $categorias = [

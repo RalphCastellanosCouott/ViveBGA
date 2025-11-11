@@ -75,5 +75,16 @@ Route::middleware(['auth'])->group(function () {
     // --------------------------
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+
+        Route::get('/admin/clientes', [AdminController::class, 'clientes'])->name('admin.clientes');
+        Route::delete('/admin/clientes/{id}', [AdminController::class, 'eliminarUsuario'])->name('admin.usuario.eliminar');
+
+        Route::get('/admin/permisos', [AdminController::class, 'permisos'])->name('admin.permisos');
+        Route::post('/admin/organizador/{id}/permiso', [AdminController::class, 'cambiarPermiso'])->name('admin.organizador.permiso');
+
+        Route::get('/admin/organizadores', [AdminController::class, 'organizadores'])->name('admin.organizadores');
+
+        Route::get('/admin/eventos', [AdminController::class, 'eventos'])->name('admin.eventos');
+        Route::delete('/admin/eventos/{id}', [AdminController::class, 'eliminarEvento'])->name('admin.evento.eliminar');
     });
 });
